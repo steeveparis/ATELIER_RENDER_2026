@@ -1,3 +1,5 @@
+# main.tf
+
 terraform {
   required_providers {
     render = {
@@ -12,22 +14,9 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
-# --- Variables existantes ---
-variable "github_actor" {
-  description = "GitHub username"
-  type        = string
-}
+# --- ON NE DÉCLARE PLUS LES VARIABLES ICI ---
 
-variable "image_url" {
-  type = string
-}
-
-variable "image_tag" {
-  type = string
-  default = "latest"
-}
-
-# --- 1. Création de la Base de Données PostgreSQL ---
+# 1. Database
 resource "render_database" "postgres_db" {
   name     = "db-postgres-${var.github_actor}"
   plan     = "free"
@@ -40,7 +29,7 @@ resource "render_database" "postgres_db" {
   }
 }
 
-# --- 2. Mise à jour de l'App Flask (Backend) ---
+# 2. Flask App
 resource "render_web_service" "flask_app" {
   name   = "flask-render-iac-${var.github_actor}"
   plan   = "free"
@@ -54,17 +43,12 @@ resource "render_web_service" "flask_app" {
   }
 
   env_vars = {
-    ENV = {
-      value = "production"
-    }
-    # On injecte la chaîne de connexion de la DB créée au-dessus
-    DATABASE_URL = {
-      value = render_database.postgres_db.connection_string
-    }
+    ENV = { value = "production" }
+    DATABASE_URL = { value = render_database.postgres_db.connection_string }
   }
 }
 
-# --- 3. Création d'Adminer (Interface DB) ---
+# 3. Adminer
 resource "render_web_service" "adminer" {
   name   = "adminer-${var.github_actor}"
   plan   = "free"
@@ -72,7 +56,6 @@ resource "render_web_service" "adminer" {
 
   runtime_source = {
     image = {
-      # Adminer est disponible sur Docker Hub
       image_url = "adminer" 
       tag       = "latest"
     }

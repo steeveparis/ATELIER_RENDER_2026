@@ -17,7 +17,7 @@ provider "render" {
 # --- ON NE DÉCLARE PLUS LES VARIABLES ICI ---
 
 # 1. Database
-resource "render_database" "postgres_db" {
+resource "render_postgres" "postgres_db" {
   name     = "db-postgres-${var.github_actor}"
   plan     = "free"
   region   = "frankfurt"
@@ -44,7 +44,7 @@ resource "render_web_service" "flask_app" {
 
   env_vars = {
     ENV = { value = "production" }
-    DATABASE_URL = { value = render_database.postgres_db.connection_string }
+    DATABASE_URL = { render_postgres.postgres_db.connection_info.internal_connection_string }
   }
 }
 

@@ -13,10 +13,6 @@ def home():
 def health():
     return {"status": "Tout est ok ou pas"}
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
 @app.route("/info")
 def info():
     return {
@@ -28,3 +24,8 @@ def info():
 @app.route("/env")
 def env():
     return {"env": os.getenv("ENV")}
+
+# Ce bloc est ignoré par Gunicorn en production, mais utile en local
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

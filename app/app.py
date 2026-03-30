@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Flask + Docker + GHCR + Terraform + Render"
+    return "Ceci est le site web pour afficher sur Render"
 
 @app.route("/health")
 def health():

@@ -15,7 +15,7 @@ provider "render" {
 
 # --- 1. BASE DE DONNÉES POSTGRESQL ---
 resource "render_postgres" "postgres_db" {
-  name           = "db-postgre-${var.github_actor}"
+  name           = "db-postgress-${var.github_actor}"
   plan           = "free"
   region         = "frankfurt"
   version        = "15" 

@@ -4,7 +4,7 @@ function App() {
   const [messageBack, setMessageBack] = useState("Chargement...");
   
   // Utilise ton URL de backend
-  const BACKEND_URL = "https://flask-render-iac-steeveparis-4zeu.onrender.com";
+  const BACKEND_URL = "https://flask-render-iac-steeveparis.onrender.com/";
 
   useEffect(() => {
     // On appelle la racine "/" pour avoir la chaîne de caractères

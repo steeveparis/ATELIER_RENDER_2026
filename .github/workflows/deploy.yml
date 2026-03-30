@@ -1,53 +1,46 @@
 name: CI/CD Render
-
 on:
   push:
     branches: [ "main" ]
-
 permissions:
   contents: read
   packages: write
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - name: Lowercase owner
+        id: lower
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - name: Clear Docker auth
         run: |
           unset DOCKER_AUTH_CONFIG
           rm -f ~/.docker/config.json || true
           mkdir -p ~/.docker
-
       - name: Login GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and Push Docker image
         env:
-          IMAGE_URL: ghcr.io/steeveparis/flask-render-iac
+          IMAGE_URL: ghcr.io/${{ steps.lower.outputs.owner }}/flask-render-iac
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t ${IMAGE_URL}:${IMAGE_TAG} .
           docker push ${IMAGE_URL}:${IMAGE_TAG}
           echo "IMAGE_URL=${IMAGE_URL}" >> $GITHUB_ENV
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
-
       - name: Compute Render service name
         run: |
           SERVICE_NAME="flask-render-iac-${{ github.actor }}"
           echo "SERVICE_NAME=${SERVICE_NAME}" >> $GITHUB_ENV
           echo "Using Render service name: ${SERVICE_NAME}"
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Delete existing Render service if present
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -56,10 +49,8 @@ jobs:
           RESPONSE=$(curl -s \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             https://api.render.com/v1/services)
-
           echo "Services returned by Render:"
           echo "$RESPONSE" | jq -r '.[] | select(.service != null) | .service.name'
-
           SERVICE_ID=$(echo "$RESPONSE" \
             | jq -r --arg NAME "$SERVICE_NAME" '
                 .[]
@@ -68,7 +59,6 @@ jobs:
                 | .service.id
               ' \
             | head -n 1)
-
           if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
             echo "No existing Render service named ${SERVICE_NAME}. Nothing to delete."
           else
@@ -77,17 +67,13 @@ jobs:
               -H "Authorization: Bearer ${RENDER_API_KEY}" \
               "https://api.render.com/v1/services/${SERVICE_ID}"
           fi
-
       - name: Wait after delete
         run: sleep 10
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
       - name: Terraform Init
         run: terraform init
         working-directory: terraform
-
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \

@@ -14,19 +14,13 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
-# --- ON NE DÉCLARE PLUS LES VARIABLES ICI ---
-
-# 1. Database
+# 1. Database (Correction de la structure pour le provider Render)
 resource "render_postgres" "postgres_db" {
-  name     = "db-postgres-${var.github_actor}"
-  plan     = "free"
-  region   = "frankfurt"
-  engine_adapter = "postgresql"
-
-  database_info = {
-    database_name = "workshop_db"
-    database_user = "user_admin"
-  }
+  name           = "db-postgres-${var.github_actor}"
+  plan           = "free"
+  region         = "frankfurt"
+  database_name  = "workshop_db"
+  user           = "user_admin"
 }
 
 # 2. Flask App
@@ -43,8 +37,13 @@ resource "render_web_service" "flask_app" {
   }
 
   env_vars = {
-    ENV = { value = "production" }
-    DATABASE_URL = { render_postgres.postgres_db.connection_info.internal_connection_string }
+    ENV = { 
+      value = "production" 
+    }
+    # LA CORRECTION EST ICI : Ajout de "value ="
+    DATABASE_URL = { 
+      value = render_postgres.postgres_db.connection_info.internal_connection_string 
+    }
   }
 }
 
